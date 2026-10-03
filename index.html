@@ -153,6 +153,18 @@
     .photo-picker.has-photo .photo-change{display:block}
     .upload-progress{font-size:10px;color:var(--muted);min-height:15px}
 
+    [hidden]{display:none!important}
+    #coffeeType{font:inherit;font-size:16px;width:100%;min-height:48px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#faf9f6;color:var(--ink)}
+    #coffeeType:focus-visible{outline:2px solid var(--coffee);outline-offset:2px}
+    .coffee-tag{display:table;max-width:100%;margin:0 0 9px;padding:5px 9px;border-radius:7px;background:#f2ece6;color:var(--coffee);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+    .qr-welcome{padding:4px 0 16px;border-bottom:1px solid var(--line)}
+    .qr-eyebrow{font-size:11px;color:var(--coffee);font-weight:700}
+    .qr-welcome h2{white-space:pre-line;font-size:25px;line-height:1.4;letter-spacing:-.045em;margin:12px 0}
+    .qr-welcome p{font-size:13px;line-height:1.8;color:#66635f;margin:0}
+    .qr-note{display:block;font-size:11px;color:#8c7664;margin-top:12px}
+    .browse-stories{border:0;background:none;padding:10px;font-size:12px;color:#77716a;text-decoration:underline;cursor:pointer}
+    #writeDialog.qr-entry{width:min(calc(100% - 24px),520px);max-height:94dvh}
+    #writeDialog.qr-entry .modal-head{background:#f8f7f3}
     @media(max-width:520px){
       h1{font-size:29px}
       .hero{padding-top:34px}
@@ -176,7 +188,7 @@
     <section class="hero">
       <h1 data-i18n="headline">같은 커피.
 다른 순간.</h1>
-      <p data-i18n="intro">지금 마신 커피에는 어떤 이야기가 있나요? 짧게 남기고, 같은 커피를 마신 다른 사람들의 순간을 만나보세요.</p>
+      <p data-i18n="intro">지금 마신 커피에는 어떤 이야기가 있나요? 자신의 이야기를 짧게 남기고, 같은 커피를 마신 다른 사람들의 순간을 만나보세요.</p>
     </section>
     <section id="feedSection" aria-label="이야기" data-i18n-aria="feedLabel">
       <div class="feed" id="feed"></div>
@@ -184,14 +196,28 @@
   </main>
 </div>
 
-<button class="fab" id="fab" data-i18n="shareButton">＋ 순간 남기기</button>
+<button class="fab" id="fab" data-i18n="shareButton">＋ 이야기 남기기</button>
 
-<dialog id="writeDialog">
+<dialog id="writeDialog" aria-labelledby="writerTitle">
   <div class="modal-head">
-    <h3 data-i18n="share">순간 남기기</h3>
+    <h3 id="writerTitle" tabindex="-1" autofocus data-i18n="share">이야기 남기기</h3>
     <button class="modal-close" type="button" data-close="writeDialog" aria-label="작성창 닫기" data-i18n-aria="close">×</button>
   </div>
   <form class="form" id="postForm" novalidate>
+    <div class="qr-welcome" id="qrWelcome" hidden>
+      <span class="qr-eyebrow" data-i18n="qrEyebrow">같은 커피로 이어지는 이야기</span>
+      <h2 data-i18n="qrTitle">지금 마시는 커피에<br>당신의 이야기를 더해주세요.</h2>
+      <p data-i18n="qrIntro">같은 커피를 마시는 사람들이 각자의 이야기를 나누는 공간이에요. 지금의 이야기를 짧게 남기고, 다른 사람들과 소통해보세요.</p>
+      <span class="qr-note" data-i18n="qrNote">회원가입 없이, 글만으로도 참여할 수 있어요.</span>
+    </div>
+    <div class="field">
+      <label for="coffeeType" data-i18n="coffeeLabel">마신 커피</label>
+      <select id="coffeeType" required aria-controls="customCoffeeField"></select>
+    </div>
+    <div class="field" id="customCoffeeField" hidden>
+      <label for="coffeeOther" data-i18n="coffeeOtherLabel">커피 이름</label>
+      <input id="coffeeOther" maxlength="40" data-i18n-placeholder="coffeeOtherPlaceholder" placeholder="마신 커피의 이름을 적어주세요." />
+    </div>
     <div class="field">
       <label for="story" data-i18n="story">이야기</label>
       <textarea id="story" maxlength="280" required data-i18n-placeholder="storyPlaceholder" placeholder="커피를 마신 지금의 순간을 짧게 남겨주세요."></textarea>
@@ -221,6 +247,7 @@
     </div>
     <p id="formMessage" role="alert" hidden></p>
     <button class="submit" type="submit">게시하기</button>
+    <button id="browseStories" class="browse-stories" type="button" data-i18n="browseStories" hidden>다른 사람들의 이야기 먼저 보기</button>
   </form>
 </dialog>
 
@@ -246,8 +273,13 @@
   const messages = {
     ko: {
       brand:"같은 커피, 다른 순간", title:"같은 커피, 다른 순간", headline:"같은 커피.\n다른 순간.",
-      intro:"지금 마신 커피에는 어떤 이야기가 있나요? 짧게 남기고, 같은 커피를 마신 다른 사람들의 순간을 만나보세요.",
-      language:"언어 선택", feedLabel:"이야기", share:"순간 남기기", shareButton:"＋ 순간 남기기", close:"작성창 닫기",
+      intro:"지금 마신 커피에는 어떤 이야기가 있나요? 자신의 이야기를 짧게 남기고, 같은 커피를 마신 다른 사람들의 순간을 만나보세요.",
+      coffeeLabel:"마신 커피", coffeeChoose:"커피를 선택해주세요", coffeeOther:"기타", coffeeOtherLabel:"커피 이름", coffeeOtherPlaceholder:"마신 커피의 이름을 적어주세요.",
+      enterCoffee:"마신 커피를 선택해주세요.", enterCoffeeOther:"커피 이름을 입력해주세요.",
+      qrEyebrow:"같은 커피로 이어지는 이야기", qrTitle:"지금 마시는 커피에\n당신의 이야기를 더해주세요.",
+      qrIntro:"같은 커피를 마시는 사람들이 각자의 이야기를 나누는 공간이에요. 지금의 이야기를 짧게 남기고, 다른 사람들과 소통해보세요.",
+      qrNote:"회원가입 없이, 글만으로도 참여할 수 있어요.", browseStories:"다른 사람들의 이야기 먼저 보기",
+      language:"언어 선택", feedLabel:"이야기", share:"이야기 남기기", shareButton:"＋ 이야기 남기기", close:"작성창 닫기",
       story:"이야기", storyPlaceholder:"커피를 마신 지금의 순간을 짧게 남겨주세요.", city:"도시", country:"국가", cityPlaceholder:"서울", countryPlaceholder:"대한민국",
       photo:"사진", addPhoto:"사진 추가", changePhoto:"사진 변경", preview:"선택한 사진 미리보기", postPhoto:"커피와 함께한 순간",
       post:"게시하기", comment:"댓글 달기", send:"등록", like:"좋아요", comments:"댓글", somewhere:"어딘가에서",
@@ -262,7 +294,12 @@
     en: {
       brand:"Same coffee, different moment", title:"Same Coffee, Different Moment", headline:"Same coffee.\nDifferent moment.",
       intro:"What’s the story behind your coffee today? Share a little moment and discover others enjoying the same coffee.",
-      language:"Choose language", feedLabel:"Stories", share:"Share your moment", shareButton:"＋ Share your moment", close:"Close editor",
+      coffeeLabel:"Your coffee", coffeeChoose:"Choose your coffee", coffeeOther:"Other", coffeeOtherLabel:"Coffee name", coffeeOtherPlaceholder:"Enter the name of your coffee.",
+      enterCoffee:"Please choose your coffee.", enterCoffeeOther:"Please enter your coffee’s name.",
+      qrEyebrow:"Stories connected by coffee", qrTitle:"Your coffee.\nYour story.",
+      qrIntro:"A place to share stories with people enjoying the same coffee. Leave a little story about this moment and connect with others.",
+      qrNote:"No sign-up needed. A few words are enough.", browseStories:"Explore other stories first",
+      language:"Choose language", feedLabel:"Stories", share:"Share your story", shareButton:"＋ Share your story", close:"Close editor",
       story:"Your story", storyPlaceholder:"Share a little moment with your coffee.", city:"City", country:"Country", cityPlaceholder:"Seoul", countryPlaceholder:"South Korea",
       photo:"Photo", addPhoto:"Add photo", changePhoto:"Change photo", preview:"Selected photo preview", postPhoto:"A moment with coffee",
       post:"Post", comment:"Add a comment", send:"Post", like:"Like", comments:"Comments", somewhere:"Somewhere",
@@ -275,6 +312,12 @@
       imageSize:"Couldn’t reduce the photo size. Please choose another photo.", uploadFailed:"Photo upload failed. Please try again."
     }
   };
+  // Stored coffeeType values are human-readable Korean names, including custom names.
+  const coffeeOptions = [
+    ["아메리카노","Americano"],["에스프레소","Espresso"],["카페라테","Caffè Latte"],
+    ["카푸치노","Cappuccino"],["바닐라라테","Vanilla Latte"],["카페모카","Caffè Mocha"],
+    ["카라멜 마키아토","Caramel Macchiato"],["콜드브루","Cold Brew"]
+  ];
   const moods = [
     ["느긋한","Easygoing"],["잠이 덜 깬","Sleepy"],["산책하는","Strolling"],["수줍은","Shy"],
     ["꿈꾸는","Dreamy"],["호기심 많은","Curious"],["햇살 같은","Sunny"],["흥얼거리는","Humming"],
@@ -295,11 +338,31 @@
   function nickname(seed){const h=hashSeed(seed),i=language==="ko"?0:1;return moods[h%moods.length][i]+" "+coffees[Math.floor(h/moods.length)%coffees.length][i];}
 
   const params = new URLSearchParams(location.search);
+  const isQrEntry = params.get("from") === "qr";
   const coffeeCode = (params.get("code") || "GLOBAL-01").toUpperCase().slice(0,40);
 
   const feed = document.querySelector("#feed");
   const postForm = document.querySelector("#postForm");
   const writeDialog = document.querySelector("#writeDialog");
+  const coffeeSelect = document.querySelector("#coffeeType");
+  const coffeeOtherInput = document.querySelector("#coffeeOther");
+  function updateCoffeeField(){
+    const other = coffeeSelect.value === "other";
+    document.querySelector("#customCoffeeField").hidden = !other;
+    coffeeOtherInput.required = other;
+  }
+  function renderCoffeeOptions(){
+    const value=coffeeSelect.value;
+    coffeeSelect.replaceChildren();
+    for(const [key,label] of [["",t("coffeeChoose")],...coffeeOptions.map(([ko,en])=>[ko,language==="ko"?ko:en]),["other",t("coffeeOther")]]){
+      const option=document.createElement("option");
+      option.value=key; option.textContent=label;
+      coffeeSelect.append(option);
+    }
+    coffeeSelect.value=value;
+    updateCoffeeField();
+  }
+  coffeeSelect.addEventListener("change",updateCoffeeField);
   const statusEl = document.querySelector("#status");
   const photoInput = document.querySelector("#photoInput");
   const photoPicker = document.querySelector("#photoPicker");
@@ -338,6 +401,7 @@
     for(const [selector,property,key] of [["[data-i18n-placeholder]","placeholder","i18nPlaceholder"],["[data-i18n-alt]","alt","i18nAlt"],["[data-i18n-aria]","aria-label","i18nAria"]]){
       document.querySelectorAll(selector).forEach(el=>el.setAttribute(property,t(el.dataset[key])));
     }
+    renderCoffeeOptions();
     setBusy(busy);
     setProgress(progressKey);
     if(messageKey){formMessage.textContent=t(messageKey);statusEl.textContent=t(messageKey);}
@@ -426,7 +490,7 @@
     busy=value;
     submitBtn.disabled=busy || preparing;
     submitBtn.textContent=t(busy ? "posting" : preparing ? "preparing" : "post");
-    postForm.querySelectorAll("input,textarea").forEach(el=>el.disabled=busy);
+    postForm.querySelectorAll("input,textarea,select").forEach(el=>el.disabled=busy);
   }
   function clearPhoto(){
     preparedPhotoBlob=null;
@@ -443,6 +507,7 @@
     activeRequest?.abort();
     activeRequest=null;
     postForm.reset();
+    updateCoffeeField();
     clearPhoto();
     preparing=false;
     draftId="";
@@ -586,6 +651,13 @@
       const who=document.createElement("strong");
       who.textContent=anonName(post);
       story.append(who,document.createTextNode(post.story||""));
+      if(typeof post.coffeeType === "string" && post.coffeeType.trim()){
+        const tag=document.createElement("div");
+        tag.className="coffee-tag";
+        const known=coffeeOptions.find(([ko])=>ko===post.coffeeType);
+        tag.textContent="☕ "+(language==="en" && known ? known[1] : post.coffeeType);
+        body.append(tag);
+      }
       body.append(story);
       article.append(body);
 
@@ -776,8 +848,11 @@
     if(busy || preparing) return;
     const story=document.querySelector("#story").value.trim();
     if(!story){toast("enterStory");return;}
+    if(!coffeeSelect.value){toast("enterCoffee");coffeeSelect.focus();return;}
+    const coffeeType=coffeeSelect.value==="other" ? coffeeOtherInput.value.trim().slice(0,40) : coffeeSelect.value;
+    if(!coffeeType){toast("enterCoffeeOther");coffeeOtherInput.focus();return;}
     const current=revision;
-    const post={authorSeed,city:document.querySelector("#city").value.trim(),country:document.querySelector("#country").value.trim(),story,coffeeCode,likes:0,comments:[],imageUrl:""};
+    const post={authorSeed,city:document.querySelector("#city").value.trim(),country:document.querySelector("#country").value.trim(),story,coffeeCode,coffeeType,likes:0,comments:[],imageUrl:""};
     const controller=new AbortController();
     activeRequest=controller;
     formMessage.hidden=true;
@@ -813,16 +888,24 @@
     }
   });
 
-  function openWriter(){resetDraft();writeDialog.showModal();}
-  writeDialog.addEventListener("close",()=>{if(!writeDialog.open) resetDraft();});
-  writeDialog.addEventListener("cancel",()=>resetDraft());
+  function openWriter(qr=false){
+    writeDialog.classList.toggle("qr-entry",qr);
+    document.querySelector("#qrWelcome").hidden=!qr;
+    document.querySelector("#browseStories").hidden=!qr;
+    writeDialog.showModal();
+    document.querySelector("#writerTitle").focus();
+  }
+  // Closing keeps the current draft, including the selected photo and coffee.
+  writeDialog.addEventListener("cancel",e=>{if(busy)e.preventDefault();});
+  document.querySelector("#browseStories").onclick=()=>{if(!busy)writeDialog.close();};
   applyLanguage();
   loadFeed();
   window.addEventListener("online",()=>loadFeed());
-  document.querySelector("#fab").onclick=openWriter;
+  document.querySelector("#fab").onclick=()=>openWriter();
+  if(isQrEntry) openWriter(true);
   languageSelect.addEventListener("change",()=>{language=languageSelect.value==="en"?"en":"ko";savePreference("coffee-language",language);applyLanguage();});
   document.querySelectorAll("[data-close]").forEach(btn=>{
-    btn.onclick=()=>{if(btn.dataset.close==="writeDialog") resetDraft();document.querySelector("#"+btn.dataset.close).close();};
+    btn.onclick=()=>{if(!busy)document.querySelector("#"+btn.dataset.close).close();};
   });
 </script>
 </body>
