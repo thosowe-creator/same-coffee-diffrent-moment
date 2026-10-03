@@ -182,7 +182,7 @@
     .coffee-choice input:checked+span{background:var(--coffee);border-color:var(--coffee);color:white}
     .coffee-choice input:focus-visible+span{outline:2px solid var(--coffee);outline-offset:3px}
     .active-filter{padding:14px 18px;border-bottom:1px solid var(--line)}
-    .active-filter[hidden]{display:none}
+    .active-filter[hidden],#filterOtherField[hidden]{display:none}
     .active-filter button{border:1px solid var(--line);border-radius:999px;background:var(--soft);font-size:12px;padding:10px 14px;cursor:pointer}
     @media(max-width:380px){.topbar{padding:0 12px;gap:6px}.top-actions{gap:5px}.find-stories{padding:10px 8px}.language-control{width:82px;flex-basis:82px}.brand{font-size:11px}}
   </style>
@@ -222,6 +222,7 @@
   <form class="form" id="filterForm">
     <div class="filter-intro"><h2 id="findTitle" data-i18n="findTitle">나와 같은 커피, 어떤 이야기들이 있을까요?</h2><p id="findDescription" data-i18n="findDescription">나와 같은 커피를 마신 사람들의 이야기를 만나보세요.</p></div>
     <fieldset class="coffee-filters" id="coffeeFilters"><legend data-i18n="filterChoose">커피 선택</legend></fieldset>
+    <div class="field" id="filterOtherField" hidden><label for="filterOther" data-i18n="filterOtherLabel">찾고 싶은 커피 이름</label><input id="filterOther" type="text" maxlength="40" data-i18n-placeholder="filterOtherPlaceholder" placeholder="예: 플랫화이트, 헤이즐넛 라테" disabled></div>
     <button type="submit" class="submit" data-i18n="viewStories">이야기 보기</button>
   </form>
 </dialog>
@@ -340,8 +341,8 @@
       imageSize:"Couldn’t reduce the photo size. Please choose another photo.", uploadFailed:"Photo upload failed. Please try again."
     }
   };
-  Object.assign(messages.ko,{findStories:"이야기 찾기",findTitle:"나와 같은 커피, 어떤 이야기들이 있을까요?",findDescription:"나와 같은 커피를 마신 사람들의 이야기를 만나보세요.",filterChoose:"커피 선택",viewStories:"이야기 보기",allCoffee:"전체",filteredEmpty:"이 커피의 이야기는 아직 없어요. 첫 이야기를 남겨보세요.",clearCoffeeFilter:"커피 필터 해제"});
-  Object.assign(messages.en,{findStories:"Find stories",findTitle:"Same coffee. What’s your story?",findDescription:"Discover stories from people who enjoyed the same coffee as you.",filterChoose:"Choose a coffee",viewStories:"View stories",allCoffee:"All",filteredEmpty:"No stories for this coffee yet. Share the first one.",clearCoffeeFilter:"Clear coffee filter"});
+  Object.assign(messages.ko,{filterOtherLabel:"찾고 싶은 커피 이름",filterOtherPlaceholder:"예: 플랫화이트, 헤이즐넛 라테",filterOtherRequired:"찾고 싶은 커피 이름을 입력해주세요.",findStories:"이야기 찾기",findTitle:"나와 같은 커피, 어떤 이야기들이 있을까요?",findDescription:"나와 같은 커피를 마신 사람들의 이야기를 만나보세요.",filterChoose:"커피 선택",viewStories:"이야기 보기",allCoffee:"전체",filteredEmpty:"이 커피의 이야기는 아직 없어요. 첫 이야기를 남겨보세요.",clearCoffeeFilter:"커피 필터 해제"});
+  Object.assign(messages.en,{filterOtherLabel:"Coffee name to find",filterOtherPlaceholder:"e.g. Flat white, hazelnut latte",filterOtherRequired:"Enter the coffee name you want to find.",findStories:"Find stories",findTitle:"Same coffee. What’s your story?",findDescription:"Discover stories from people who enjoyed the same coffee as you.",filterChoose:"Choose a coffee",viewStories:"View stories",allCoffee:"All",filteredEmpty:"No stories for this coffee yet. Share the first one.",clearCoffeeFilter:"Clear coffee filter"});
   // Stored coffeeType values are human-readable Korean names, including custom names.
   const coffeeOptions = [
     ["아메리카노","Americano"],["에스프레소","Espresso"],["카페라테","Caffè Latte"],
@@ -409,17 +410,29 @@
   let selectedCoffee = "";
   const findDialog=document.querySelector("#findDialog");
   function coffeeLabel(value){const known=coffeeOptions.find(([ko])=>ko===value);return !value?t("allCoffee"):language==="en" && known?known[1]:value;}
+  const filterOther=document.querySelector("#filterOther");
+  function updateFilterOther(focus=false){
+    const other=document.querySelector('input[name="coffeeFilter"]:checked')?.value==="__other__";
+    document.querySelector("#filterOtherField").hidden=!other;
+    filterOther.disabled=!other;filterOther.required=other;filterOther.setCustomValidity("");
+    if(other && focus)filterOther.focus();
+  }
+  document.querySelector("#coffeeFilters").addEventListener("change",()=>updateFilterOther(true));
+  filterOther.addEventListener("input",()=>filterOther.setCustomValidity(""));
+  const normalizeCoffee=value=>value.trim().toLocaleLowerCase();
   function renderFilters(){
     const field=document.querySelector("#coffeeFilters");
     field.querySelectorAll("label").forEach(el=>el.remove());
     const values=["",...coffeeOptions.map(([ko])=>ko)];
     for(const post of visiblePosts){const value=typeof post.coffeeType==="string"?post.coffeeType.trim():"";if(value && !values.includes(value))values.push(value);}
     if(selectedCoffee && !values.includes(selectedCoffee))values.push(selectedCoffee);
+    values.push("__other__");
     for(const value of values){
       const label=document.createElement("label");label.className="coffee-choice";
       const input=document.createElement("input");input.type="radio";input.name="coffeeFilter";input.value=value;input.checked=value===selectedCoffee;
-      const span=document.createElement("span");span.textContent=coffeeLabel(value);label.append(input,span);field.append(label);
+      const span=document.createElement("span");span.textContent=value==="__other__"?t("coffeeOther"):coffeeLabel(value);label.append(input,span);field.append(label);
     }
+    updateFilterOther();
   }
   function updateFilterBadge(){
     document.querySelector("#activeFilter").hidden=!selectedCoffee;
@@ -427,7 +440,7 @@
   }
   function refreshFilteredFeed(){updateFilterBadge();if(feedState==="ready" || visiblePosts.length)renderPosts(visiblePosts);}
   document.querySelector("#findStories").onclick=()=>{renderFilters();findDialog.showModal();};
-  document.querySelector("#filterForm").onsubmit=e=>{e.preventDefault();selectedCoffee=new FormData(e.currentTarget).get("coffeeFilter") || "";findDialog.close();refreshFilteredFeed();document.querySelector("#feedSection").scrollIntoView({behavior:"smooth",block:"start"});};
+  document.querySelector("#filterForm").onsubmit=e=>{e.preventDefault();const choice=new FormData(e.currentTarget).get("coffeeFilter") || "";if(choice==="__other__" && !filterOther.value.trim()){filterOther.setCustomValidity(t("filterOtherRequired"));filterOther.reportValidity();return;}selectedCoffee=choice==="__other__"?filterOther.value.trim():choice;findDialog.close();refreshFilteredFeed();document.querySelector("#feedSection").scrollIntoView({behavior:"smooth",block:"start"});};
   document.querySelector("#clearFilter").onclick=()=>{selectedCoffee="";refreshFilteredFeed();};
   let feedSequence = 0;
   let busy = false;
@@ -595,7 +608,7 @@
   }
 
   function renderPosts(posts){
-    if(selectedCoffee)posts=posts.filter(post=>typeof post.coffeeType==="string" && post.coffeeType.trim()===selectedCoffee);
+    if(selectedCoffee)posts=posts.filter(post=>typeof post.coffeeType==="string" && normalizeCoffee(post.coffeeType)===normalizeCoffee(selectedCoffee));
     feed.replaceChildren();
     if(!posts.length){
       const empty=document.createElement("div");
